@@ -1,29 +1,21 @@
 import streamlit as st
+import sys
 
 import pandas as pd
 import altair as alt
 from urllib.error import URLError
+import plotly.express as px
 
 import numpy as np
 
-from helper import get_eod_api_data_by_ticker, process_second_measure_input_data
+from helper import get_eod_api_data_by_ticker, process_second_measure_input_data, process_similarweb_data, compute_rquared_and_correlations, get_start_date_from_sm_file
 
-METRICS = ["Observed Sales","Observed Transactions","Observed Customers","Sales per Customer","Average Transaction Value","Transactions per Customer","Share of Sales","Share of Transactions"]
+METRICS = ["Observed Sales","Observed Transactions","Observed Customers","Sales per Customer","Average Transaction Value","Transactions per Customer"] #["Observed Sales","Observed Transactions","Observed Customers","Sales per Customer","Average Transaction Value","Transactions per Customer","Share of Sales","Share of Transactions"]
+SIMILAR_WEB_API_KEY = "7d015188e27e4ee1867f64a18213cbf5"
 
-
-num_quarters_to_get_financials_for = 5
-
-st.set_page_config(page_title="Sales Analysis", page_icon="📊", layout="wide")
-
-
-
-st.markdown("# Sales Analysis")
-st.sidebar.header("Sales Analysis")
-
-@st.cache_data
-def get_ticker_data():
-    df = pd.read_csv("/Users/matt/predictive-sales-metrics/companies.csv")
-    return df.set_index("Ticker")
+st.set_page_config(page_title="Backtester", page_icon="📊", layout="wide")
+st.markdown("# Backtest Results")
+st.sidebar.markdown("### Backtest Parameters")
 
 df = None
 ticker = None
@@ -32,92 +24,84 @@ normalized_eod_df = None
 final_df = None
 company_website = None
 metric_to_df_map = {}
+final_similar_web_df = None
+uploaded_file = None
+sw_uploaded_file = None
+eod_data_by_ticker = None
 
 try:
-    df = get_ticker_data()
-    with st.form("my_form"):
-        uploaded_file = st.file_uploader("Choose a file")
-        # Every form must have a submit button.
+    with st.sidebar.form("my_form"):
+        uploaded_file = st.file_uploader("Choose a Second Measure file", type=['xlsx', 'csv'])
+        sw_uploaded_file = st.file_uploader("Choose a SimilarWeb file", type=['xlsx'])
         submitted = st.form_submit_button("Submit")
             
 
         if submitted:
+            # uploaded_file.seek(0)
+            # with open(f"/home/ubuntu/predictive-sales-metrics/input_data/{uploaded_file.name}", "wb") as f:
+            #     f.write(uploaded_file.read())
+
+            # sw_uploaded_file.seek(0)
+            # with open(f"/home/ubuntu/predictive-sales-metrics/input_data/{sw_uploaded_file.name}", "wb") as f:
+            #     f.write(sw_uploaded_file.read())
+
+            # sys.exit(0)
+            
             if uploaded_file is not None:
-                # TODO: make this return a list of tickers once we add functionality for uploading zip files (list of ecxel files)
-                
+                uploaded_file.seek(0)
+                if ticker is None:
+                    ticker = uploaded_file.name.split("_")[0]
+                start_date = get_start_date_from_sm_file(uploaded_file)
+                eod_data_by_ticker, company_website = get_eod_api_data_by_ticker(ticker, start_date)
                 for metric in METRICS:
-                    df, ticker = process_second_measure_input_data(uploaded_file, metrics=[metric])
-                    eod_data_by_ticker, company_website = get_eod_api_data_by_ticker(ticker, len(df.index)//3)
-                                
-                    revenue_dict = {"Month": list(df.index.values), "Total Revenue By Quarter": []}
-                    # eod_data_by_ticker.set_index("Month", inplace=True)
-
-
-                    for date_val in df.index.values:
-                        # print(f"date_val: {date_val}")
-                        if date_val in eod_data_by_ticker.index.values:
-                            print(f"Found matching value!")
-                            revenue_dict["Total Revenue By Quarter"].append(eod_data_by_ticker["Revenue"][date_val])
-                        else:
-                            revenue_dict["Total Revenue By Quarter"].append(np.NaN)
-                            # revenue_dict = np.NaN
-                    
-                    normalized_eod_df = pd.DataFrame(revenue_dict)
-                    normalized_eod_df.set_index("Month", inplace=True)
-                    final_df = df.merge(normalized_eod_df, how='inner',  left_on=df.index, right_on=normalized_eod_df.index)
-                    # final_df["Date"] = final_df["key_0"]
+                    uploaded_file.seek(0)
+                    df, ticker = process_second_measure_input_data(uploaded_file,eod_data_by_ticker, metrics=[metric], ticker=ticker)
+                    final_df = df.merge(eod_data_by_ticker, how='inner',  left_on=df.index, right_on=eod_data_by_ticker.index)
                     final_df.rename({"key_0": "Date"}, axis=1, inplace=True)
-                    print(f"final_df: {final_df.head()}")
                     final_df.set_index("Date", inplace=True)
                     metric_to_df_map[metric] = final_df
-                    # st.write(f"Ticker: {ticker}")
-                    # st.write(f"company website: {company_website}")
-                    # st.write(f"Months back: {len(df.index)}")
+
+            
+            if sw_uploaded_file is not None:
+                sw_uploaded_file.seek(0)
+                similar_web_data_df = process_similarweb_data(sw_uploaded_file, eod_data_by_ticker)
+                similar_web_data_df.set_index("Quarterly Date", inplace=True)
+                final_similar_web_df = similar_web_data_df.merge(eod_data_by_ticker, how='inner',  left_on=similar_web_data_df.index, right_on=eod_data_by_ticker.index)
+                print(f"Hi End1: {eod_data_by_ticker}")
+                final_similar_web_df.rename({"key_0": "Date"}, axis=1,inplace=True)
+                final_similar_web_df.set_index("Date", inplace=True)
+                metric_to_df_map["Similar Web Data"] = final_similar_web_df
                     
-                    # st.dataframe(final_df, height=800, width=1200) 
-    
     if ticker:
+        backtest_df = compute_rquared_and_correlations(metric_to_df_map, eod_data_by_ticker)
         st.write(f"Ticker: {ticker}")
         st.write(f"company website: {company_website}")
-        # st.dataframe(final_df, height=800, width=1200)
-
-        # Add tabs here:
-        obs_sales, obs_txns, obs_cust, sales_per_cust, avg_txn_val, txns_per_customer, share_of_sales, share_of_txns = st.tabs(METRICS)
-        # [,,,,,]
-        print(f"metric_to_df_map:\n{metric_to_df_map}")
-        with obs_sales:
-            st.header("Observed Sales")
-            # print(f"obs_sales: {obs_sales}, metric_to_df_map.keys(): {metric_to_df_map.keys()}")
-            # print(f"obs_sales: {obs_sales}")
-            # st.dataframe(metric_to_df_map[obs_sales], height=800, width=1200)
-            st.dataframe(metric_to_df_map["Observed Sales"], height=800, width=1200)
-        with obs_txns:
-            st.header("Observed Transactions")
-            st.dataframe(metric_to_df_map["Observed Transactions"], height=800, width=1200)
-        with obs_cust:
-            st.header("Observed Customers")
-            st.dataframe(metric_to_df_map["Observed Customers"], height=800, width=1200)
-        with sales_per_cust:
-            st.header("Sales per Customer")
-            st.dataframe(metric_to_df_map["Sales per Customer"], height=800, width=1200)
-        with avg_txn_val:
-            st.header("Average Transaction Value")
-            st.dataframe(metric_to_df_map["Average Transaction Value"], height=800, width=1200)
-        with txns_per_customer:
-            st.header("Transactions per Customer")
-            st.dataframe(metric_to_df_map["Transactions per Customer"], height=800, width=1200)
-        with share_of_sales:
-            st.header("Share of Sales")
-            st.dataframe(metric_to_df_map["Share of Sales"], height=800, width=1200)
-        with share_of_txns:
-            st.header("Share of Transactions")
-            st.dataframe(metric_to_df_map["Share of Transactions"], height=800, width=1200)
+        sw_and_bt_tabs = st.tabs(["Backtest", "Similar Web"])
         
+        with sw_and_bt_tabs[0]:
+             st.header("Backtest")
+             st.dataframe(backtest_df, height=800, width=1600)
 
-
-        
-            
-   
+        with sw_and_bt_tabs[1]:
+             st.header("Similar Web")
+             st.dataframe(metric_to_df_map["Similar Web Data"], height=800, width=1600)
+             fig = px.scatter(
+                metric_to_df_map["Similar Web Data"],
+                x=metric_to_df_map["Similar Web Data"].Date,
+                y=metric_to_df_map["Similar Web Data"]["Visits % Change"],
+                size="pop",
+                color="continent",
+                hover_name="country",
+                log_x=True,
+                size_max=60,
+            )
+     
+        sm_metrics = st.tabs(METRICS)
+        for i, metric_i in enumerate(METRICS):
+            with sm_metrics[i]:
+                st.header(metric_i)
+                st.altair_chart(metric_to_df_map[metric_i], *, use_container_width=False, theme="streamlit", key=None, on_select="ignore", selection_mode=None)
+                # st.dataframe(metric_to_df_map[metric_i], height=800, width=1600)
 except URLError as e:
     st.error(
         """
