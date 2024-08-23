@@ -430,6 +430,8 @@ def generate_page():
 
         with qtd_tab:
             data = []
+            sw_approaching_label = str(df_sw_tracking_approaching_qtd.index.date[0])
+            sw_prior_qtd_label = str(df_sw_tracking_prior_qtd.index.date[0])
             for i, metric in enumerate(SW_METRICS):
                 trace = go.Scatter(
                     x=[
@@ -440,7 +442,7 @@ def generate_page():
                     ][::-1],
                     y=df_sw_tracking_approaching_qtd[f"{metric} CumSum"],
                     mode="lines+markers",
-                    name=f"{metric}",
+                    name=f"{metric} {sw_approaching_label}",
                     line=dict(color=SW_METRICS_COLORS[i]),
                 )
                 data.append(trace)
@@ -450,7 +452,7 @@ def generate_page():
                     ],
                     y=df_sw_tracking_prior_qtd[f"{metric} CumSum"],
                     mode="lines+markers",
-                    name=f"{metric}",
+                    name=f"{metric} {sw_prior_qtd_label}",
                     line=dict(color=SW_METRICS_COLORS_QTD[i]),
                 )
                 data.append(trace2)
@@ -468,6 +470,8 @@ def generate_page():
                 st.dataframe(cleaned_qtd_df_sw)
 
             data = []
+            sm_approaching_label = str(df_sm_tracking_approaching_qtd.index.date[0])
+            sm_prior_qtd_label = str(df_sm_tracking_prior_qtd.index.date[0])
             for i, metric in enumerate(SM_METRICS):
                 trace = go.Scatter(
                     x=[
@@ -478,7 +482,7 @@ def generate_page():
                     ][::-1],
                     y=df_sm_tracking_approaching_qtd[f"{metric} CumSum"],
                     mode="lines+markers",
-                    name=f"{metric}",
+                    name=f"{metric} {sm_approaching_label}",
                     line=dict(color=SM_METRICS_COLORS[i]),
                 )
                 data.append(trace)
@@ -488,7 +492,7 @@ def generate_page():
                     ],
                     y=df_sm_tracking_prior_qtd[f"{metric} CumSum"],
                     mode="lines+markers",
-                    name=f"{metric}",
+                    name=f"{metric} {sm_prior_qtd_label}",
                     line=dict(color=SM_METRICS_COLORS_QTD[i]),
                 )
                 data.append(trace2)
@@ -506,4 +510,5 @@ def generate_page():
                 st.dataframe(cleaned_qtd_df_sm)
 
 
-generate_page()
+if __name__ == '__main__':
+    generate_page()
