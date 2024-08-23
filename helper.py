@@ -1,22 +1,18 @@
-import os
-import json
-
 import requests
 import pandas as pd
 import numpy as np
 from sec_cik_mapper import StockMapper
-from sklearn.preprocessing import StandardScaler
+
+from constants import (
+    EODHD_API_TOKEN,
+    EODHD_URL_FOR_FINANCIALS
+)
 
 
 # NOTE: uncomment this for the first time you run the app
 # import pip
 # pip.main(["install", "openpyxl"])
 
-
-EODHD_API_TOKEN = "667849cef19004.34002384"
-EODHD_URL_FOR_FINANCIALS = (
-    "https://eodhd.com/api/fundamentals/{ticker}.US?api_token={api_token}&fmt=json"
-)
 PATH_TO_INPUT_DATA = "/home/ubuntu/predictive-sales-metrics"
 
 
