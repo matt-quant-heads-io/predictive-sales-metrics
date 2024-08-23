@@ -12,7 +12,7 @@ from helper import (
     add_growth_rates_to_quarterly_cumsums_df,
     merge_rev_columns_to,
     get_stats_df,
-    qtd_data_for_chart
+    qtd_data_for_chart,
 )
 from constants import (
     SM_METRICS,
@@ -22,7 +22,7 @@ from constants import (
     SW_METRICS_COLORS,
     SW_METRICS_COLORS_QTD,
     SM_METRICS_COLORS,
-    SM_METRICS_COLORS_QTD
+    SM_METRICS_COLORS_QTD,
 )
 
 
@@ -67,9 +67,9 @@ def preprocess_df(df, df_type=None):
 def clean_summary_df_column_names(df):
     new_df = df.copy()
     columns_to_be_cleaned = [c for c in new_df.columns if "CumSum" in c]
-    for column_to_cleaned in columns_to_be_cleaned:
-        new_column_name = column_to_cleaned.replace(" CumSum", "")
-        new_df.rename({column_to_cleaned: new_column_name}, axis=1, inplace=True)
+    for column_to_clean in columns_to_be_cleaned:
+        new_column_name = column_to_clean.replace(" CumSum", "")
+        new_df.rename({column_to_clean: new_column_name}, axis=1, inplace=True)
 
     return new_df
 
@@ -77,9 +77,9 @@ def clean_summary_df_column_names(df):
 def clean_qtd_df_column_names(df):
     new_df = df.copy()
     columns_to_be_cleaned = [c for c in new_df.columns if "CumSum" in c]
-    for column_to_cleaned in columns_to_be_cleaned:
-        new_column_name = column_to_cleaned.replace(" CumSum", " Cumulative")
-        new_df.rename({column_to_cleaned: new_column_name}, axis=1, inplace=True)
+    for column_to_clean in columns_to_be_cleaned:
+        new_column_name = column_to_clean.replace(" CumSum", " Cumulative")
+        new_df.rename({column_to_clean: new_column_name}, axis=1, inplace=True)
 
     return new_df
 
@@ -133,12 +133,20 @@ def generate_page():
         df_sw_cumsums_by_quarter_with_rev = merge_rev_columns_to(
             df_sw_cumsums_by_quarter, revenue_df
         )
-        
-        cleaned_df_summary_sm = clean_summary_df_column_names(df_sm_cumsums_by_quarter_with_rev)
-        cleaned_df_summary_sw = clean_summary_df_column_names(df_sw_cumsums_by_quarter_with_rev)
 
-        cleaned_df_summary_sm = clean_summary_df_column_names(df_sm_cumsums_by_quarter_with_rev)
-        cleaned_df_summary_sw = clean_summary_df_column_names(df_sw_cumsums_by_quarter_with_rev)
+        cleaned_df_summary_sm = clean_summary_df_column_names(
+            df_sm_cumsums_by_quarter_with_rev
+        )
+        cleaned_df_summary_sw = clean_summary_df_column_names(
+            df_sw_cumsums_by_quarter_with_rev
+        )
+
+        cleaned_df_summary_sm = clean_summary_df_column_names(
+            df_sm_cumsums_by_quarter_with_rev
+        )
+        cleaned_df_summary_sw = clean_summary_df_column_names(
+            df_sw_cumsums_by_quarter_with_rev
+        )
 
         sm_stats_df = get_stats_df(df_sm_cumsums_by_quarter_with_rev)
         sw_stats_df = get_stats_df(df_sw_cumsums_by_quarter_with_rev)
