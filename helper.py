@@ -29,15 +29,9 @@ def get_cik_from_ticker(ticker):
 def get_earnings_dates_from_edgar_api(ticker):
     headers = {"User-Agent": "email@address.com"}
     cik = get_cik_from_ticker(ticker)
-
     filingMetadata = requests.get(
         f"https://data.sec.gov/submissions/CIK{cik}.json", headers=headers
     )
-
-    filingMetadata.json()["filings"]
-    filingMetadata.json()["filings"].keys()
-    filingMetadata.json()["filings"]["recent"]
-    filingMetadata.json()["filings"]["recent"].keys()
 
     all_forms = pd.DataFrame.from_dict(filingMetadata.json()["filings"]["recent"])
     cols_of_interest = [
@@ -52,6 +46,7 @@ def get_earnings_dates_from_edgar_api(ticker):
     dummy_dict["dummy_data"] = [i for i in range(len(all_forms.reportDate.values))]
     report_dates_df = pd.DataFrame(dummy_dict)
     report_dates_df.set_index("report_dates", inplace=True)
+    report_dates_df.sort_index(ascending=False, inplace=True)
 
     return report_dates_df
 
