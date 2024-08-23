@@ -141,13 +141,6 @@ def generate_page():
             df_sw_cumsums_by_quarter_with_rev
         )
 
-        cleaned_df_summary_sm = clean_summary_df_column_names(
-            df_sm_cumsums_by_quarter_with_rev
-        )
-        cleaned_df_summary_sw = clean_summary_df_column_names(
-            df_sw_cumsums_by_quarter_with_rev
-        )
-
         sm_stats_df = get_stats_df(df_sm_cumsums_by_quarter_with_rev)
         sw_stats_df = get_stats_df(df_sw_cumsums_by_quarter_with_rev)
 
