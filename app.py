@@ -64,6 +64,26 @@ def preprocess_df(df, df_type=None):
     return df[SM_METRICS] if df_type == "sm" else df[SW_METRICS]
 
 
+def clean_summary_df_column_names(df):
+    new_df = df.copy()
+    columns_to_be_cleaned = [c for c in new_df.columns if "CumSum" in c]
+    for column_to_cleaned in columns_to_be_cleaned:
+        new_column_name = column_to_cleaned.replace(" CumSum", "")
+        new_df.rename({column_to_cleaned: new_column_name}, axis=1, inplace=True)
+
+    return new_df
+
+
+def clean_qtd_df_column_names(df):
+    new_df = df.copy()
+    columns_to_be_cleaned = [c for c in new_df.columns if "CumSum" in c]
+    for column_to_cleaned in columns_to_be_cleaned:
+        new_column_name = column_to_cleaned.replace(" CumSum", " Cumulative")
+        new_df.rename({column_to_cleaned: new_column_name}, axis=1, inplace=True)
+
+    return new_df
+
+
 def generate_page():
     with st.sidebar.form("my_form"):
         sm_uploaded_file = st.file_uploader(
@@ -113,6 +133,12 @@ def generate_page():
         df_sw_cumsums_by_quarter_with_rev = merge_rev_columns_to(
             df_sw_cumsums_by_quarter, revenue_df
         )
+        
+        cleaned_df_summary_sm = clean_summary_df_column_names(df_sm_cumsums_by_quarter_with_rev)
+        cleaned_df_summary_sw = clean_summary_df_column_names(df_sw_cumsums_by_quarter_with_rev)
+
+        cleaned_df_summary_sm = clean_summary_df_column_names(df_sm_cumsums_by_quarter_with_rev)
+        cleaned_df_summary_sw = clean_summary_df_column_names(df_sw_cumsums_by_quarter_with_rev)
 
         sm_stats_df = get_stats_df(df_sm_cumsums_by_quarter_with_rev)
         sw_stats_df = get_stats_df(df_sw_cumsums_by_quarter_with_rev)
@@ -123,6 +149,9 @@ def generate_page():
         df_sw_tracking_approaching_qtd, df_sw_tracking_prior_qtd = qtd_data_for_chart(
             df_sw, revenue_df, SW_METRICS
         )
+
+        cleaned_qtd_df_sm = clean_qtd_df_column_names(df_sm_tracking_approaching_qtd)
+        cleaned_qtd_df_sw = clean_qtd_df_column_names(df_sw_tracking_approaching_qtd)
 
         summary_tab, qtd_tab = st.tabs(["Summary", "QTD"])
         with summary_tab:
@@ -339,9 +368,9 @@ def generate_page():
                 st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
                 with st.expander("Second Measure Table"):
-                    st.dataframe(df_sm_cumsums_by_quarter_with_rev)
+                    st.dataframe(cleaned_df_summary_sm)
                 with st.expander("Similar Web Table"):
-                    st.dataframe(df_sw_cumsums_by_quarter_with_rev)
+                    st.dataframe(cleaned_df_summary_sw)
 
             idx = 0
             with absolute_tab:
@@ -366,7 +395,7 @@ def generate_page():
                 st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
                 with st.expander("Second Measure Table"):
-                    st.dataframe(df_sm_cumsums_by_quarter_with_rev)
+                    st.dataframe(cleaned_df_summary_sm)
 
                 data = []
                 for i, metric in enumerate(SW_METRICS):
@@ -389,7 +418,7 @@ def generate_page():
                 st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
                 with st.expander("Similar Web Table"):
-                    st.dataframe(df_sw_cumsums_by_quarter_with_rev)
+                    st.dataframe(cleaned_df_summary_sw)
 
         with qtd_tab:
             data = []
@@ -428,7 +457,7 @@ def generate_page():
             st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
             with st.expander("Similar Web Table"):
-                st.dataframe(df_sw_tracking_approaching_qtd)
+                st.dataframe(cleaned_qtd_df_sw)
 
             data = []
             for i, metric in enumerate(SM_METRICS):
@@ -466,7 +495,7 @@ def generate_page():
             st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
             with st.expander("Second Measure Table"):
-                st.dataframe(df_sm_tracking_approaching_qtd)
+                st.dataframe(cleaned_qtd_df_sm)
 
 
 generate_page()
