@@ -14,7 +14,6 @@ SW_METRICS_COLORS = ["blue", "green", "firebrick", "orange", "purple"]
 SW_METRICS_COLORS_QTD = ["lightblue", "lightgreen", "tomato"]
 SM_METRICS_COLORS = ["blue", "green", "firebrick", "orange", "purple"]
 SM_METRICS_COLORS_QTD = ["lightblue", "lightgreen", "tomato"]
-EODHD_API_TOKEN = "667849cef19004.34002384"
 EODHD_URL_FOR_FINANCIALS = (
     "https://eodhd.com/api/fundamentals/{ticker}.US?api_token={api_token}&fmt=json"
 )

@@ -4,12 +4,16 @@ import requests
 import pandas as pd
 import numpy as np
 from sec_cik_mapper import StockMapper
+from dotenv import dotenv_values
 
-from constants import (
-    EODHD_API_TOKEN,
-    EODHD_URL_FOR_FINANCIALS
-)
+from constants import EODHD_URL_FOR_FINANCIALS
 
+CONFIG = dotenv_values(".env")
+
+
+EODHD_API_TOKEN = CONFIG.get("EODHD_API_TOKEN")
+if not EODHD_API_TOKEN:
+    raise ValueError("Could not locate api key 'EODHD_API_TOKEN'")
 
 # NOTE: uncomment this for the first time you run the app
 # import pip
